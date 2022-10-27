@@ -1,6 +1,8 @@
 import numpy as np
 from bs4 import BeautifulSoup
 import requests
+import html2text
+from termcolor import colored
 
 TOP_URL = "http://mdrs.marssociety.org/previous-field-seasons/"
 
@@ -37,6 +39,18 @@ class webItem:
 		self.responseHTML = requests.get(self.href).text
 		self.responseSoup = BeautifulSoup(self.responseHTML, 'html.parser')
 		self.responseText = self.responseSoup.get_text()
+		self.rawText = html2text.html2text(self.responseHTML)
+
+	def searchForKeyword(self, keyword, pm = 20):
+		l = len(keyword)
+		if keyword in self.rawText:
+			indices = [i for i in range(len(self.rawText)) if self.rawText[i : i + l] == keyword]
+			for ind in indices:
+				resultText = self.rawText[max(ind - pm, 0) : min(ind + pm, len(self.rawText))]
+				resultText = resultText.replace(keyword, colored(keyword, "red"))
+				print("\t" * self.depth + str(self.depth) + " < " + self.href + " > " + resultText.replace("\n", " "))
+		for child in self.children:
+			child.searchForKeyword(keyword, pm)
 
 	def getChildren(self, output = True, filterfunc = lambda x: True, passfilter = True):
 		if self.depth > MAXDEPTH:
@@ -72,6 +86,7 @@ class webItem:
 				href = self.parent.href + href
 
 			item = webItem(href, self)
+			self.children.append(item)
 			item.fetchSelfData()
 
 			if passfilter:
