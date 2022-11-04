@@ -3,20 +3,11 @@ from bs4 import BeautifulSoup
 import requests
 import html2text
 from termcolor import colored
+import utils
 
-TOP_URL = "http://mdrs.marssociety.org/previous-field-seasons/"
-
-MAXDEPTH = 10
+MAXDEPTH = 5
 
 ALREADY_DONE = []
-
-def wordfilter(word):
-	keywords = ["season", "crew", "sol", "report", "summary"]
-	for keyword in keywords:
-		if keyword in word or keyword.capitalize() in word:
-			return True
-
-	return False
 
 class webItem:
 	def __init__(self, href, parent, child_ind = 0):
@@ -60,8 +51,10 @@ class webItem:
 			for ind in indices:
 				resultText = self.rawText[max(ind - pm, 0) : min(ind + pm, len(self.rawText))]
 				resultText = resultText.replace(keyword, colored(keyword, "red"))
+				resultText = resultText.replace("\n", " ")
+
 				if url_filter(self.href):
-					print(" " * self.depth + " < " + self.href + " > " + resultText.replace("\n", " "))
+					print(" " * self.depth + " < " + self.href + " > " + resultText)
 		for child in self.children:
 			child.searchForKeyword(keyword, url_filter = url_filter, pm = pm)
 
@@ -110,9 +103,4 @@ class webItem:
 				item.getChildren(output, filterfunc, passfilter)
 			else:
 				item.getChildren(output)
-
-
-DATABASE = webItem(TOP_URL, None)
-DATABASE.fetchSelfData()
-DATABASE.getChildren(filterfunc = wordfilter)
 
