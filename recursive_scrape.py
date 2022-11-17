@@ -39,7 +39,10 @@ class webItem:
 		return False
 
 	def fetchSelfData(self):
-		self.responseHTML = requests.get(self.href).text
+		try:
+			self.responseHTML = requests.get(self.href).text
+		except Exception as e:
+			return
 		self.responseSoup = BeautifulSoup(self.responseHTML, 'html.parser')
 		self.responseText = self.responseSoup.get_text()
 		self.rawText = html2text.html2text(self.responseHTML)
@@ -93,8 +96,8 @@ class webItem:
 			#if output:
 				#print("\t" * (self.depth + 1) + "Fetching data for child\t <", href, ">")
 
-			#if not ("http://" in href or "https://" in href):
-			#	href = self.href + href
+			if not ("http://" in href or "https://" in href):
+				href = self.href + href
 			item = webItem(href, self, len(self.children))
 			self.children.append(item)
 			item.fetchSelfData()
